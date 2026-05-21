@@ -2,62 +2,55 @@
 
 > Arc-level narrative state. Rewritten as needed. Read this BEFORE acting.
 
-_Last updated: 2026-05-21 — Phase 00 complete, Phase 01 queued_
+_Last updated: 2026-05-21 — Phase A complete (scaffold + sonnet-built scripts 01-04). Plan revised after Opus review. Paused for travel._
 
 ## Current arc
-**Setup phase.** Folder structure created, raw videos ingested and checksummed, project
-docs initialized. Ready to begin video editing and sync.
+**Paused at a safe spot.** Phase A (scaffold) is committed and pushed. Plan was reviewed by Opus and revised — execution order changed. Next session should resume with **Phase B (docs + safety) BEFORE writing any more scripts**.
 
-**Key discovery:** RTX 4090 Laptop GPU (16GB VRAM) is fully accessible in WSL2 via CUDA.
-Most experiments will run locally. Cloud (Vast.ai) reserved for final high-quality runs only.
+## What changed in the plan after Opus review
+1. **Postshot demoted** from `scripts/trainers/` to `docs/08_postshot_protocol.md` as a manual comparison tool (paid plan may expose CLI — investigate later, don't pretend it's automation now).
+2. **GoPro Player (Windows) is now the primary equirect path.** ffmpeg v360=eac:equirect is one of multiple fallbacks to experiment with. The existing `02_extract_360_crops.sh` uses ffmpeg path — needs validation on a 10s clip before trusting.
+3. **Docs come BEFORE more scripts.** Sonnet built scripts 01-04 but skipped all 9 planned docs. Phase B now writes docs first.
+4. **`commit_phase` helper required.** Halt-resilience: each phase script ends with a commit + tag so restart is clean.
+5. **2fps vs 5fps is now an explicit A/B test** before committing the pipeline (not a guess).
+6. **Success target deferred.** Don't pre-set +1.5 dB merged-vs-best — Samsung A15 1080p may degrade merged result. Measure first.
+7. **LiDAR alignment:** try Unreal Reality Scan (desktop) first; CloudCompare/Open3D as fallback.
 
-**Training path:** gsplat 1.4.0 installed in `nerfstudio` conda env. `simple_trainer.py`
-(gsplat's reference trainer) not yet fetched — needed before Phase 09. gsplat 1.5.3 is
-available on PyPI. Upgrade + separate env to be created before first training run.
+Full revised plan at `/home/ops/.claude/plans/starting-a-new-3dgs-expressive-moon.md`.
 
-## Camera sync situation
-Samsung A15 is 61s longer than Pixel 9 (488s vs 427s). Cameras were not started
-simultaneously. Audio cross-correlation needed to find the overlap region before
-trimming. Master clock = Pixel 9.
-
-## GoPro Max format note
-File is .360 (GoPro proprietary EAC dual-fisheye, two 2272×736 HEVC streams).
-Must convert to equirectangular before any frame extraction. ffmpeg v360 available
-and tested. Conversion command to validate on a short clip before committing.
-
-## Open questions
-- **GoPro mount position during capture?** Body strap vs pole — affects which crops
-  are useful (tilted_up may be irrelevant if camera was stationary at head height)
-- **LiDAR scan upload ETA?** Scan not yet in 00_raw/lidar/. Phase 08 blocked until it arrives.
-- **gsplat upgrade:** Stay on 1.4.0 or move to 1.5.3 + new conda env? Leaning toward
-  new env to keep nerfstudio env stable.
+## Key context (carry forward)
+- RTX 4090 Laptop GPU 16GB VRAM confirmed in WSL2 via CUDA 13.2 — local training viable
+- gsplat 1.4.0 installed (nerfstudio env); 1.5.3 available; `simple_trainer.py` NOT bundled — needs fetching
+- Pixel 9 4K@120fps, Samsung A15 1080p@30fps, GoPro Max .360 dual EAC @50fps
+- All 3 cameras have AAC 48kHz audio — sync via cross-correlation viable
+- A15 is 61s longer than Pixel 9; cameras not started simultaneously
+- LiDAR (Hovermap) NOT yet uploaded to 00_raw/lidar/
 
 ## Phase status
 | Phase | Status | Notes |
 |---|---|---|
-| 00 raw ingest | ✅ 2026-05-21 | 3 cameras, checksums written |
-| 01 trim+sync | ⏳ next | audio cross-correlation pending |
-| 02 GoPro equirect | ⏳ | after 01 |
-| 03 frame extract | ⏳ | |
-| 04 blur cull | ⏳ | |
-| 05 masking | ⏳ | |
-| 06 per-cam COLMAP | ⏳ | |
-| 07 merged COLMAP | ⏳ | |
-| 08 LiDAR | ⏸ | scan not uploaded yet |
-| 09 training | ⏳ | gsplat env setup needed first |
-| 10 review | ⏳ | |
+| A scaffold | ✅ 2026-05-21 | folders, CLAUDE/NOW/LOG, scripts 01-04, GitHub repo |
+| B docs + safety | ⏳ **NEXT** | commit_phase helper, scipy check, all 9 docs |
+| C validation runs | ⏳ | sync test, GoPro 360 experiment, 2fps vs 5fps A/B |
+| D remaining scripts | ⏳ | 05-07, gsplat env, 10_train.sh, 11_review |
 
-## Immediate next actions
-1. Write `scripts/lib/audio_sync.py` for audio cross-correlation
-2. Write `scripts/01_trim_and_sync.sh`
-3. Run sync to identify overlap region → produce trimmed videos in `01_edits/`
-4. Test GoPro EAC → equirect conversion on a 10s clip
-5. Write `scripts/02_extract_360_crops.sh`
-6. Create gsplat training env + fetch `simple_trainer.py`
+## Resume instructions (for fresh session — Sonnet or whoever picks up)
+1. Read `~/CLAUDE.md` → this project's `CLAUDE.md` → this `NOW.md` → `LOG.md`
+2. Read the revised plan at `/home/ops/.claude/plans/starting-a-new-3dgs-expressive-moon.md`
+3. Begin Phase B item 1: add `commit_phase` helper to `scripts/lib/common.sh`
+4. Retrofit existing scripts 01-04 to call `commit_phase` on success
+5. Add `python3 -c "import scipy"` precheck to `01_trim_and_sync.sh`
+6. Write the 9 docs (see plan's Phase B list, items 3-8)
+7. Commit + push, update NOW.md, then move to Phase C validation runs
+
+## Open questions
+- GoPro mount position during capture (affects tilted_up crop usefulness)
+- LiDAR scan upload ETA
+- gsplat 1.4.0 vs 1.5.3 + separate env decision (deferred to Phase D)
+- Does paid Postshot expose meaningful CLI? (deferred — check on Windows main)
 
 ## Handoff cue
-- Phase 00 complete. Raw files in 00_raw/, checksums in 00_raw/checksums.sha256
-- Not yet a git repo — no commits yet
-- No cloud spend
-- No processed frames yet
-- Start by reading: CLAUDE.md → NOW.md → 00_raw/camera_manifest.json
+- Working tree clean, all in main on origin
+- GitHub: https://github.com/TemperaryT/wunder_stick
+- No processed data yet — 01_edits/ through 07_*/ all empty
+- Raw files verified by checksums (00_raw/checksums.sha256)

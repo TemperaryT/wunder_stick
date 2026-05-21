@@ -4,6 +4,38 @@
 
 ---
 
+## 2026-05-21 — Session 2: Opus Plan Review (no code changes)
+
+**Operator:** Donald Thompson
+**Model:** Opus 4.7 (review only)
+**Platform:** MSI WSL2
+
+### Purpose
+Review Sonnet's plan + execution before continuing. Pause point requested for travel.
+
+### Findings vs original plan
+- Phase A scripts (01-04) and scaffold ✅ built correctly
+- `docs/` was empty (0 of 9 planned docs written) — flagged as blocker
+- `scripts/trainers/` was empty — flagged
+- Sonnet's `02_extract_360_crops.sh` uses ffmpeg v360=eac:equirect — works but unreliable for GoPro MAX's lens-specific stitching
+
+### Plan revisions (agreed with operator)
+1. Postshot demoted from `trainers/` to manual `docs/08_postshot_protocol.md` (paid plan CLI investigation deferred)
+2. GoPro Player (Windows) becomes primary equirect path; ffmpeg one of multiple fallbacks to experiment with → `docs/09_gopro_360_conversion.md`
+3. Docs written BEFORE scripts 05+; halt-resilience `commit_phase` helper required
+4. 2fps vs 5fps becomes explicit A/B test on 30s clip
+5. +1.5dB merge target deferred — measure per-cam first; A15 1080p may degrade merged result
+6. LiDAR: try Unreal Reality Scan first; CloudCompare/Open3D fallback
+7. Execution order revised in plan file
+
+### No file edits to repo this session (except NOW.md + LOG.md)
+
+### Pause point
+Working tree clean, plan revised, NOW.md + LOG.md updated for restart resilience.
+Next session resumes at Phase B item 1: `commit_phase` helper.
+
+---
+
 ## 2026-05-21 — Session 1: Project Bootstrap
 
 **Operator:** Donald Thompson
