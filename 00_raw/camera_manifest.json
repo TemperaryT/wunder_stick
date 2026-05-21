@@ -1,0 +1,50 @@
+{
+  "captured": "2026-05-20",
+  "scene": "Industrial site",
+  "notes": "Cameras started independently — not synchronized at capture time. Audio cross-correlation required for sync.",
+  "cameras": {
+    "pixel9": {
+      "file": "pixel9/PXL_mid_cam_front_right.mp4",
+      "rig_position": "mid cam, front-right",
+      "codec": "hevc",
+      "resolution": "3840x2160",
+      "fps": 120,
+      "duration_s": 427.0,
+      "audio": "aac 48kHz stereo",
+      "size_mb": 3276,
+      "rotation": null,
+      "notes": "120fps source — extract at 2fps for SfM (≈854 frames)"
+    },
+    "samsung_a15": {
+      "file": "samsung_a15/A15_lower_cam_rear_right.mp4",
+      "rig_position": "lower cam, rear-right",
+      "codec": "h264",
+      "resolution": "1920x1080",
+      "fps": 29.9,
+      "duration_s": 488.2,
+      "audio": "aac 48kHz stereo",
+      "size_mb": 1178,
+      "rotation": null,
+      "notes": "Longest duration by ~61s vs Pixel9. Started earliest or stopped latest. Lowest resolution — may need upscale consideration for COLMAP feature matching."
+    },
+    "gopro_max": {
+      "file": "gopro_max/GS010513.360",
+      "rig_position": "360 cam (body or pole mount)",
+      "codec": "hevc (dual EAC streams)",
+      "resolution": "2272x736 per lens (2 streams)",
+      "fps": 50,
+      "duration_s": 431.4,
+      "audio": "aac 48kHz stereo + pcm_s32le 48kHz 4ch (360 spatial)",
+      "size_mb": 3418,
+      "format_notes": "GoPro MAX .360 proprietary EAC dual-fisheye. Must convert to equirectangular before use. ffmpeg v360=eac:equirect available. Verify stitching quality before committing.",
+      "companion_files": {
+        "LRV": "GS010513.LRV (low-res proxy 146MB)",
+        "THM": "GS010513.THM (thumbnail 115KB)"
+      }
+    }
+  },
+  "duration_overlap_notes": "Pixel9=427s, GoPro=431s, A15=488s. A15 is 61s longer than Pixel9. Overlap region must be identified via audio sync before trimming.",
+  "sync_method": "audio_cross_correlation",
+  "sync_master": "pixel9",
+  "checksums": "checksums.sha256"
+}

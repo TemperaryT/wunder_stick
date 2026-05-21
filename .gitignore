@@ -1,0 +1,38 @@
+# Raw media — large, immutable, not tracked in git
+00_raw/pixel9/
+00_raw/samsung_a15/
+00_raw/gopro_max/
+00_raw/lidar/
+
+# Intermediate processing stages
+01_edits/
+02_360_extracted/
+03_frames/
+04_filtered/
+05_masked/
+
+# COLMAP databases and binary models (large)
+06_colmap_per_cam/*/database.db
+06_colmap_per_cam/*/sparse/
+07_colmap_merged/database.db
+07_colmap_merged/sparse/
+
+# Training outputs
+experiments/*/splat.ply
+experiments/*/artifact.json
+*.ply
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.python-version
+
+# Logs
+*.log
+
+# Manifests and checksums ARE tracked (small, important)
+!00_raw/checksums.sha256
+!00_raw/camera_manifest.json
+!experiments/*/README.md
+!results/metrics_summary.csv

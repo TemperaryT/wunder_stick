@@ -1,0 +1,41 @@
+# wunder_stick — Session Log
+
+> Append-only. Most recent entries at top.
+
+---
+
+## 2026-05-21 — Session 1: Project Bootstrap
+
+**Operator:** Donald Thompson
+**Platform:** MSI WSL2
+
+### Actions
+- Created full directory structure (00_raw/ → experiments/, scripts/, docs/)
+- Moved raw files from project root to proper locations:
+  - `00_raw/pixel9/PXL_mid_cam_front_right.mp4` (3.3GB, 4K HEVC 120fps, 7.1min)
+  - `00_raw/samsung_a15/A15_lower_cam_rear_right.mp4` (1.2GB, 1080p H.264 ~30fps, 8.1min)
+  - `00_raw/gopro_max/GS010513.360` (3.4GB, dual EAC HEVC 50fps, 7.2min)
+  - `00_raw/gopro_max/GS010513.LRV` (low-res proxy, 146MB)
+  - `00_raw/gopro_max/GS010513.THM` (thumbnail, 115KB)
+  - Deleted `PXL_20260520_204616294.mp4:Zone.Identifier` (Windows ADS metadata junk)
+- Generated sha256 checksums → `00_raw/checksums.sha256`
+- Created `00_raw/camera_manifest.json` with full probe metadata
+- Created `CLAUDE.md`, `NOW.md`, `LOG.md`, `.gitignore`
+
+### Key discoveries
+- RTX 4090 Laptop GPU (16GB VRAM) accessible in WSL2 via CUDA 13.2 — local training viable
+- Pixel 9 shoots at 120fps → aggressive frame decimation needed (target 1-2fps for SfM)
+- Samsung A15 is 61s longer than other cameras → audio sync needed to find overlap
+- GoPro Max `.360` is dual EAC (two 2272×736 HEVC streams) — needs EAC→equirect via ffmpeg v360 before any frame work
+- gsplat 1.4.0 installed in nerfstudio env; 1.5.3 available; `simple_trainer.py` not bundled — needs to be fetched
+
+### Decisions
+- Training: LOCAL FIRST (RTX 4090 available). Cloud (Vast.ai) for final runs only.
+- gsplat direct as primary trainer (Nerfstudio wrapper retired)
+- Postshot (Windows) as blackbox comparison for per-camera baselines
+- Audio cross-correlation for sync (all three cameras have 48kHz AAC)
+- Master clock: Pixel 9
+
+### Phase 00 complete ✅
+
+---
