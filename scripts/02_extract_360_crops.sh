@@ -19,10 +19,13 @@ EQUIRECT_DIR="${OUT_DIR}/equirect"
 
 TEST_CLIP=0
 INCLUDE_TILTED=1
+TARGET_FPS=2          # decimation rate for equirect + crops; matches 03_extract_frames.sh default
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --test-clip) TEST_CLIP=1 ;;
         --no-tilted-up) INCLUDE_TILTED=0 ;;
+        --fps) TARGET_FPS="$2"; shift ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
     shift
@@ -51,11 +54,13 @@ echo "=== Step 1: EAC → Equirectangular ==="
 echo "Input: ${GOPRO_IN}"
 echo "Output: ${EQUIRECT_DIR}/ at ${EQUIRECT_W}x${EQUIRECT_H}"
 
+# fps filter decimates BEFORE the expensive v360 projection — avoids extracting
+# all 50fps frames when we only need 2fps downstream.
 ffmpeg -y \
     -i "${GOPRO_IN}" \
     ${DURATION_FLAG} \
     -map 0:v:0 \
-    -vf "v360=eac:equirect:interp=lanczos:w=${EQUIRECT_W}:h=${EQUIRECT_H}" \
+    -vf "fps=${TARGET_FPS},v360=eac:equirect:interp=lanczos:w=${EQUIRECT_W}:h=${EQUIRECT_H}" \
     -q:v 2 \
     "${EQUIRECT_DIR}/frame_%06d.jpg"
 
@@ -72,7 +77,7 @@ extract_crop() {
     mkdir -p "${out_dir}"
     echo "Extracting crop: ${label} (yaw=${yaw}° pitch=${pitch}°)"
     ffmpeg -y \
-        -framerate 50 \
+        -framerate "${TARGET_FPS}" \
         -pattern_type glob -i "${EQUIRECT_DIR}/frame_*.jpg" \
         -vf "v360=equirect:flat:ih_fov=120:iv_fov=90:yaw=${yaw}:pitch=${pitch}:interp=lanczos:w=1920:h=1440" \
         -q:v 2 \
