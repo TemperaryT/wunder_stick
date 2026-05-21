@@ -102,3 +102,4 @@ Next session resumes at Phase B item 1: `commit_phase` helper.
 
 ---
 - 2026-05-21 13:31 phase-01-trim-sync complete. offsets a15=-55.7436s gopro=4.3189s; clip=427.030867s
+- 2026-05-21 13:42 phase-03-extract-frames complete. fps=2 width=1920; pixel9=854 a15=854 gopro=2000
