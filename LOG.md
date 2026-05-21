@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-05-21 — Session 3: Phase B (docs + halt-resilience)
+
+**Operator:** Donald Thompson
+**Model:** Opus 4.7 (execution)
+**Platform:** MSI WSL2
+
+### Actions
+- `lib/common.sh`: added `commit_phase()` (idempotent — tags `phase-NN-name-complete`, no-ops on re-run) and `require_python_module()` (precheck with install hint)
+- `01_trim_and_sync.sh`: scipy + numpy preflight before audio_sync.py; `commit_phase` at end
+- `02_extract_360_crops.sh`: `commit_phase` at end (skipped for `--test-clip` runs)
+- `03_extract_frames.sh`: `commit_phase` at end with per-cam counts
+- `04_filter_blur.sh`: `commit_phase` at end with per-cam keep counts
+- Wrote 6 docs:
+  - `docs/00_pipeline_overview.md` — one-pager data flow + phase table + halt-resilience contract
+  - `docs/01_capture_field_guide.md` — rig setup, sync clap, lessons from 2026-05-20
+  - `docs/02_runbook.md` — copy-paste commands per phase, A/B test recipe
+  - `docs/06_lidar_alignment.md` — Reality Scan first, CloudCompare + Open3D ICP fallback
+  - `docs/08_postshot_protocol.md` — manual Windows-main procedure, CLI investigation deferred
+  - `docs/09_gopro_360_conversion.md` — 5 conversion options + test protocol + decision table
+
+### Decisions
+- Phase tags use the form `phase-NN-name-complete` so `git tag | sort` is the restart breadcrumb
+- `commit_phase` is no-op on existing tag — re-running a completed phase script doesn't double-commit
+- Test-clip GoPro runs skip `commit_phase` (throwaway validation)
+- Data dirs (`00_raw/`, `01_edits/`, `02_*/`, frames, `*.ply`, `*.mp4`) remain gitignored; commit_phase only stages tracked metadata (manifests, json, md)
+
+### Phase B complete ✅
+
+---
+
 ## 2026-05-21 — Session 2: Opus Plan Review (no code changes)
 
 **Operator:** Donald Thompson

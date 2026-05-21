@@ -102,4 +102,11 @@ done
 echo ""
 echo "NOTE: If equirect stitching looks wrong (visible seam, mirrored), the .360 file"
 echo "may need GoPro Player on Windows to export a proper equirect MP4 first."
-echo "See docs/02_runbook.md for fallback procedure."
+echo "See docs/09_gopro_360_conversion.md for the comparison + fallback procedure."
+
+# Skip phase commit for test-clip runs — those are throwaway validation.
+if [[ "${TEST_CLIP}" -eq 0 ]]; then
+    front_n=$(count_frames "${OUT_DIR}/front")
+    commit_phase "phase-02-gopro-360-crops" \
+        "equirect=${EQUIRECT_COUNT}f at ${EQUIRECT_W}x${EQUIRECT_H}; front=${front_n}f"
+fi

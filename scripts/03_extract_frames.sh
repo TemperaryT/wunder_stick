@@ -67,8 +67,14 @@ done
 
 echo ""
 echo "=== Phase 03 complete ==="
-echo "  pixel9:     $(count_frames "${FRAMES_DIR}/pixel9") frames"
-echo "  samsung_a15: $(count_frames "${FRAMES_DIR}/samsung_a15") frames"
-echo "  gopro_max:  $(count_frames "${FRAMES_DIR}/gopro_max") frames"
+n_pixel9=$(count_frames "${FRAMES_DIR}/pixel9")
+n_a15=$(count_frames "${FRAMES_DIR}/samsung_a15")
+n_gopro=$(count_frames "${FRAMES_DIR}/gopro_max")
+echo "  pixel9:     ${n_pixel9} frames"
+echo "  samsung_a15: ${n_a15} frames"
+echo "  gopro_max:  ${n_gopro} frames"
 echo ""
 echo "NEXT: Run 04_filter_blur.sh to cull blurry frames."
+
+commit_phase "phase-03-extract-frames" \
+    "fps=${TARGET_FPS} width=${TARGET_WIDTH}; pixel9=${n_pixel9} a15=${n_a15} gopro=${n_gopro}"

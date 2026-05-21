@@ -2,10 +2,10 @@
 
 > Arc-level narrative state. Rewritten as needed. Read this BEFORE acting.
 
-_Last updated: 2026-05-21 — Phase A complete (scaffold + sonnet-built scripts 01-04). Plan revised after Opus review. Paused for travel._
+_Last updated: 2026-05-21 — Phase B complete (commit_phase helper + scipy precheck + 6 docs). Next: Phase C validation runs._
 
 ## Current arc
-**Paused at a safe spot.** Phase A (scaffold) is committed and pushed. Plan was reviewed by Opus and revised — execution order changed. Next session should resume with **Phase B (docs + safety) BEFORE writing any more scripts**.
+**Phase B done.** Halt-resilience helper (`commit_phase`) and `scipy` precheck wired into scripts 01–04. Six docs written (`00_pipeline_overview`, `01_capture_field_guide`, `02_runbook`, `06_lidar_alignment`, `08_postshot_protocol`, `09_gopro_360_conversion`). Next session moves to **Phase C: validation runs** — start with `01_trim_and_sync.sh`, then GoPro 360 test-clip, then 2fps vs 5fps A/B.
 
 ## What changed in the plan after Opus review
 1. **Postshot demoted** from `scripts/trainers/` to `docs/08_postshot_protocol.md` as a manual comparison tool (paid plan may expose CLI — investigate later, don't pretend it's automation now).
@@ -30,18 +30,19 @@ Full revised plan at `/home/ops/.claude/plans/starting-a-new-3dgs-expressive-moo
 | Phase | Status | Notes |
 |---|---|---|
 | A scaffold | ✅ 2026-05-21 | folders, CLAUDE/NOW/LOG, scripts 01-04, GitHub repo |
-| B docs + safety | ⏳ **NEXT** | commit_phase helper, scipy check, all 9 docs |
-| C validation runs | ⏳ | sync test, GoPro 360 experiment, 2fps vs 5fps A/B |
+| B docs + safety | ✅ 2026-05-21 | commit_phase + require_python_module helpers; 6 docs written |
+| C validation runs | ⏳ **NEXT** | sync test, GoPro 360 experiment, 2fps vs 5fps A/B |
 | D remaining scripts | ⏳ | 05-07, gsplat env, 10_train.sh, 11_review |
 
 ## Resume instructions (for fresh session — Sonnet or whoever picks up)
 1. Read `~/CLAUDE.md` → this project's `CLAUDE.md` → this `NOW.md` → `LOG.md`
 2. Read the revised plan at `/home/ops/.claude/plans/starting-a-new-3dgs-expressive-moon.md`
-3. Begin Phase B item 1: add `commit_phase` helper to `scripts/lib/common.sh`
-4. Retrofit existing scripts 01-04 to call `commit_phase` on success
-5. Add `python3 -c "import scipy"` precheck to `01_trim_and_sync.sh`
-6. Write the 9 docs (see plan's Phase B list, items 3-8)
-7. Commit + push, update NOW.md, then move to Phase C validation runs
+3. Read `docs/02_runbook.md` for the per-phase command reference
+4. Phase C item 1 — run `./scripts/01_trim_and_sync.sh`; verify the offsets in `01_edits/sync_offsets.json` look plausible (small, with sign matching capture order) and spot-check with `ffplay` per runbook
+5. Phase C item 2 — `./scripts/02_extract_360_crops.sh --test-clip` (10s only); open `02_360_extracted/equirect/frame_000001.jpg`. If seam visible, do the GoPro Player path in `docs/09_gopro_360_conversion.md` before running the full Phase 02
+6. Phase C item 3 — 2fps vs 5fps A/B test (commands in `docs/02_runbook.md` Phase 03 section). Pick winner, then run `03_extract_frames.sh --fps <winner>`
+7. Then `04_filter_blur.sh`. Phase C done.
+8. Commit + push (`commit_phase` calls handle this per-phase automatically), update NOW.md, then Phase D scripts
 
 ## Open questions
 - GoPro mount position during capture (affects tilted_up crop usefulness)

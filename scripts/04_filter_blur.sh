@@ -75,9 +75,14 @@ fi
 
 echo ""
 echo "=== Phase 04 complete ==="
+summary=""
 for cam in pixel9 samsung_a15 gopro_max; do
     [[ -d "${FILTERED_DIR}/${cam}" ]] || continue
-    echo "  ${cam}: $(count_frames "${FILTERED_DIR}/${cam}") frames kept"
+    n=$(count_frames "${FILTERED_DIR}/${cam}")
+    echo "  ${cam}: ${n} frames kept"
+    summary="${summary}${cam}=${n} "
 done
 echo ""
 echo "NEXT: Run 05_mask_moving.sh (or skip to 06 if scene has no moving objects)."
+
+commit_phase "phase-04-blur-cull" "threshold=${THRESHOLD}; ${summary}"

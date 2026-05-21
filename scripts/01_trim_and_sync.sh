@@ -38,6 +38,8 @@ GOPRO_VID="${RAW_DIR}/gopro_max/GS010513.360"
 if [[ "${SKIP_SYNC}" -eq 0 ]]; then
     echo "=== Computing audio sync offsets ==="
     activate_env fselect
+    require_python_module scipy "conda install -n fselect -c conda-forge scipy"
+    require_python_module numpy "conda install -n fselect -c conda-forge numpy"
     python3 "${SCRIPT_DIR}/lib/audio_sync.py" \
         --master "${PIXEL9_VID}" \
         --targets "${A15_VID},${GOPRO_VID}" \
@@ -118,3 +120,6 @@ echo ""
 echo "NEXT STEP: Verify sync manually by spot-checking frame 1 of each output at the same timestamp."
 echo "  ffplay 01_edits/pixel9_trimmed.mp4 &"
 echo "  ffplay 01_edits/samsung_a15_trimmed.mp4 &"
+
+commit_phase "phase-01-trim-sync" \
+    "offsets a15=${a15_offset}s gopro=${gopro_offset}s; clip=${clip_end}s"
