@@ -72,9 +72,13 @@ pixel9_dur=$(get_duration "${PIXEL9_VID}")
 a15_dur=$(get_duration "${A15_VID}")
 gopro_dur=$(get_duration "${GOPRO_VID}")
 
-# Effective duration from master's t=0 for each camera
-a15_effective=$(python3 -c "print(${a15_dur} - max(0, ${a15_offset}))")
-gopro_effective=$(python3 -c "print(${gopro_dur} - max(0, ${gopro_offset}))")
+# Effective duration from master's t=0 for each camera.
+# cam_ss = how many seconds we skip at the start of each cam to align with Pixel9.
+# effective_dur = cam_dur - cam_ss  (remaining content after skipping).
+a15_ss_preview=$(python3 -c "print(max(0, -${a15_offset}))")
+gopro_ss_preview=$(python3 -c "print(max(0, -${gopro_offset}))")
+a15_effective=$(python3 -c "print(${a15_dur} - ${a15_ss_preview})")
+gopro_effective=$(python3 -c "print(${gopro_dur} - ${gopro_ss_preview})")
 
 shortest=$(python3 -c "print(min(${pixel9_dur}, ${a15_effective}, ${gopro_effective}))")
 
@@ -87,15 +91,18 @@ fi
 echo "Clip duration: ${clip_end}s (min of all cameras' usable overlap)"
 
 # --- Step 3: Trim each camera losslessly ---
+# fmt: optional ffmpeg -f <format> override (needed for proprietary extensions like .360)
 trim_video() {
-    local input="$1" output="$2" ss="$3" end="$4"
-    # ss = start in source file, end = duration of clip
+    local input="$1" output="$2" ss="$3" end="$4" fmt="${5:-}"
     echo "Trimming: $(basename "${input}") → $(basename "${output}") [ss=${ss}s, dur=${end}s]"
+    local fmt_flag=()
+    [[ -n "${fmt}" ]] && fmt_flag=(-f "${fmt}")
     ffmpeg -y \
         -ss "${ss}" \
         -i "${input}" \
         -t "${end}" \
         -c copy \
+        "${fmt_flag[@]}" \
         "${output}"
 }
 
@@ -106,9 +113,21 @@ trim_video "${PIXEL9_VID}" "${EDITS_DIR}/pixel9_trimmed.mp4" "0" "${clip_end}"
 a15_ss=$(python3 -c "print(max(0, -${a15_offset}))")
 trim_video "${A15_VID}" "${EDITS_DIR}/samsung_a15_trimmed.mp4" "${a15_ss}" "${clip_end}"
 
-# GoPro Max: same logic
+# GoPro Max: .360 is a GoPro-proprietary MP4 container.
+# Requires -f mp4 and explicit stream mapping — the proprietary data tracks
+# (gpmd/tmcd/fdsc) don't mux cleanly into mp4 and corrupt the output.
+# We keep both video streams (front+back EAC lenses) and the main AAC audio only.
 gopro_ss=$(python3 -c "print(max(0, -${gopro_offset}))")
-trim_video "${GOPRO_VID}" "${EDITS_DIR}/gopro_max_trimmed.360" "${gopro_ss}" "${clip_end}"
+echo "Trimming: $(basename "${GOPRO_VID}") → gopro_max_trimmed.360 [ss=${gopro_ss}s, dur=${clip_end}s]"
+ffmpeg -y \
+    -ss "${gopro_ss}" \
+    -i "${GOPRO_VID}" \
+    -t "${clip_end}" \
+    -map 0:v \
+    -map 0:a:0 \
+    -c copy \
+    -f mp4 \
+    "${EDITS_DIR}/gopro_max_trimmed.360"
 
 echo ""
 echo "=== Phase 01 complete ==="
