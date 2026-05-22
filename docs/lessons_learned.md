@@ -106,10 +106,17 @@ most visually similar frames globally, bypassing sequence order entirely.
 where the camera is walking around (not slowly panning). Update `06_colmap_per_cam.sh` to use
 vocab_tree_matcher as default, with sequential as a fast-validation option only.
 
+**Do NOT use vocab_tree_builder:** it runs faiss k-means on CPU (BLAS sgemm) and takes 12+ hours
+for 5.4M descriptors. Download COLMAP's pre-built Flickr100K 256K-word tree instead (~70MB):
+```
+https://github.com/colmap/colmap/releases/download/3.11.1/vocab_tree_faiss_flickr100K_words256K.bin
+```
+
 **Updated pipeline in 06_colmap_per_cam.sh:**
 ```bash
-colmap vocab_tree_builder --database_path db --vocab_tree_path tree.bin --num_visual_words 32768
-colmap vocab_tree_matcher --database_path db --vocab_tree_path tree.bin \
+# Download once to ~/.cache/colmap_vocab/ (script handles this automatically)
+colmap vocab_tree_matcher --database_path db \
+    --VocabTreeMatching.vocab_tree_path ~/.cache/colmap_vocab/vocab_tree_flickr100K_words256K.bin \
     --VocabTreeMatching.num_nearest_neighbors 30
 ```
 

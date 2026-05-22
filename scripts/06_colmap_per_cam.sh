@@ -115,13 +115,16 @@ run_colmap_cam() {
 
     # 2. Matching — vocab_tree (default) or sequential
     if [[ "${MATCHER}" == "vocab_tree" ]]; then
-        local tree="${out_dir}/vocab_tree.bin"
-        echo "--- vocab_tree_builder ---"
-        colmap vocab_tree_builder \
-            --database_path "${db}" \
-            --vocab_tree_path "${tree}" \
-            --num_visual_words 32768
-        echo "--- vocab_tree_matcher (nn=${NN}) ---"
+        # Use pre-built 256K-word tree (Flickr100K, faiss-based, ~70MB).
+        # Building from scratch takes hours on CPU; pre-built tree is faster and equally effective.
+        local tree="${HOME}/.cache/colmap_vocab/vocab_tree_flickr100K_words256K.bin"
+        if [[ ! -f "${tree}" ]]; then
+            echo "Downloading COLMAP pre-built vocab tree (~70MB)..."
+            mkdir -p "${HOME}/.cache/colmap_vocab"
+            curl -fL "https://github.com/colmap/colmap/releases/download/3.11.1/vocab_tree_faiss_flickr100K_words256K.bin" \
+                -o "${tree}"
+        fi
+        echo "--- vocab_tree_matcher (nn=${NN}, tree=flickr100K_256K) ---"
         colmap vocab_tree_matcher \
             --database_path "${db}" \
             --VocabTreeMatching.vocab_tree_path "${tree}" \
