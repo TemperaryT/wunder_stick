@@ -140,6 +140,14 @@ run_colmap_cam() {
         --output_path "${best_sparse}" \
         --output_type TXT 2>/dev/null || true
 
+    # Create images/ symlink in out_dir so gsplat simple_trainer.py can use this
+    # dir directly as --data_dir (expects sparse/0/ + images/ at same level).
+    local images_link="${out_dir}/images"
+    if [[ ! -e "${images_link}" ]]; then
+        ln -s "$(realpath "${img_dir}")" "${images_link}"
+        echo "  Symlinked: ${images_link} → ${img_dir}"
+    fi
+
     # 4. Quality gate
     echo "--- quality gate ---"
     python3 "${COLMAP_STATS}" "${best_sparse}" \
