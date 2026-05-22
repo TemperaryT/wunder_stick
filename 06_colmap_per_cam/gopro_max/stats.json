@@ -1,0 +1,28 @@
+{
+  "sparse_dir": "/home/ops/projects/wunder_stick/06_colmap_per_cam/gopro_max/sparse/0",
+  "total_images": 3244,
+  "registered_images": 2600,
+  "registered_pct": 80.1,
+  "num_points3d": 247759,
+  "reproj_err_mean": 1.0392,
+  "gates": {
+    "registered_pct": {
+      "value": 80.1,
+      "threshold": 85.0,
+      "op": ">=",
+      "passed": false
+    },
+    "num_points3d": {
+      "value": 247759,
+      "threshold": 10000,
+      "op": ">=",
+      "passed": true
+    },
+    "reproj_err_mean": {
+      "value": 1.0392,
+      "threshold": 1.5,
+      "op": "<=",
+      "passed": true
+    }
+  }
+}

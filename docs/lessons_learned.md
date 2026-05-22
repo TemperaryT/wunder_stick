@@ -4,6 +4,64 @@ Append-only. Record immediately when a non-obvious gotcha is hit. Do not wait fo
 
 ---
 
+## 2026-05-22 — conda run does not forward heredoc stdin to subprocess
+
+**Context:** Pipeline script used `conda run -n fselect python3 - <<'PYEOF'...PYEOF` to run
+an inline Python script. The script completed instantly with no output and left the output
+directory empty — Python silently received no stdin and exited with code 0.
+
+**Root cause:** `conda run` wraps the subprocess in a way that breaks stdin forwarding from
+heredocs. The `python3 -` flag tells Python to read from stdin, but conda run's stdin handling
+drops the heredoc content.
+
+**Fix:** Always write Python scripts to a temp file and run with `conda run -n env python3 /tmp/script.py`.
+Never use `conda run ... python3 - <<'HEREDOC'` — it silently produces empty output.
+
+---
+
+## 2026-05-22 — GoPro Max: ffmpeg v360=eac:equirect is wrong; use GoPro Player
+
+**Context:** `02_extract_360_crops.sh` used `v360=eac:equirect` to convert the GoPro Max .360 file.
+This produced equirectangular frames that looked completely wrong ("butchered"), and the perspective
+crops extracted from them were just rectangular slices of the distorted equirect, not real perspective views.
+
+**Root cause:** GoPro Max .360 is NOT in EAC (Equi-Angular Cubemap) format. It is a proprietary
+dual-fisheye format with GoPro-specific stitching metadata. ffmpeg's `v360=eac` input assumes
+a different layout and produces garbage output on GoPro .360 files.
+
+**Fix:** Use GoPro Player (Windows) to export equirectangular MP4. GoPro Player uses the factory
+lens calibration embedded in the file and produces correct stitching. Export → equirectangular MP4.
+
+**Cost:** 7.8GB of bad data had to be deleted and reprocessed.
+
+**Rule:** Never use `ffmpeg v360=eac` for GoPro Max .360 files. Always use GoPro Player for the
+initial conversion step. The ffmpeg `v360=equirect:flat` perspective crop step is fine AFTER
+you have a correctly-stitched equirectangular source.
+
+**New source file:** `00_raw/gopro_max/gopro_equa.mp4` (3072×1536, GoPro Player export)
+**New pipeline:** gopro_equa.mp4 → trim → `v360=equirect:flat` perspective crops (not EAC)
+
+---
+
+## 2026-05-22 — Pixel9 footage not suitable for SfM (walking, close-ups, turns)
+
+**Context:** vocab_tree_matcher (nn=30) on Pixel9 registered 39.1% of frames (289/739).
+Quality gate requires 85%. 62,723 matched pairs but 97% failed RANSAC geometric verification.
+
+**Root cause:** The Pixel9 footage was handheld walking with close-up shots, sharp turns, and
+erratic movement. This creates two SfM problems:
+1. Repetitive-scene false matches: different parts of the industrial scene look similar → features
+   match visually but fail RANSAC (97% rejection rate)
+2. Close-up shots → near-degenerate geometry, no useful 3D constraints
+
+**Lesson:** Walking handheld footage for SfM requires: (a) steady movement, (b) consistent distance
+from subject, (c) no sharp turns or pauses near walls. The Pixel9 clip violated all three.
+
+**Decision:** May drop Pixel9 from the pipeline and rely on Samsung A15 + GoPro for reconstruction.
+User is evaluating via Postshot. GoPro 360° coverage + A15 may be sufficient.
+
+---
+
 ## 2026-05-21 — GoPro .360 trim: ffmpeg can't mux to .360 extension
 
 **Context:** `01_trim_and_sync.sh` tried to trim the raw GoPro Max `.360` file

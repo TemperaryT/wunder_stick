@@ -1,28 +1,28 @@
 {
   "sparse_dir": "/home/ops/projects/wunder_stick/06_colmap_per_cam/pixel9/sparse/0",
   "total_images": 739,
-  "registered_images": 49,
-  "registered_pct": 6.6,
-  "num_points3d": 9629,
-  "reproj_err_mean": 1.3527,
+  "registered_images": 289,
+  "registered_pct": 39.1,
+  "num_points3d": 29712,
+  "reproj_err_mean": 2.0499,
   "gates": {
     "registered_pct": {
-      "value": 6.6,
+      "value": 39.1,
       "threshold": 85.0,
       "op": ">=",
       "passed": false
     },
     "num_points3d": {
-      "value": 9629,
+      "value": 29712,
       "threshold": 10000,
       "op": ">=",
-      "passed": false
+      "passed": true
     },
     "reproj_err_mean": {
-      "value": 1.3527,
+      "value": 2.0499,
       "threshold": 1.5,
       "op": "<=",
-      "passed": true
+      "passed": false
     }
   }
 }

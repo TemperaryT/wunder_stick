@@ -2,61 +2,75 @@
 
 > Arc-level narrative state. Rewritten as needed. Read this BEFORE acting.
 
-_Last updated: 2026-05-22 — Phase D execution in progress. COLMAP Pixel9 running._
+_Last updated: 2026-05-22 01:33 — GoPro re-processing running overnight. Strategy shift in progress._
 
-## CRITICAL — Active process (do NOT kill)
-PID 193817: `colmap vocab_tree_matcher` on Pixel9 database.
-Running since ~00:27 on 2026-05-22. Check with:
-```bash
-ps aux | grep "colmap\|glomap" | grep -v grep
-```
-The script `06_colmap_per_cam.sh --cam pixel9` is running in the background.
-After vocab_tree_matcher finishes, it will automatically run GLOMAP and produce stats.json.
+## No active processes. Safe to move/restart machine.
 
 ## Current arc
-**Phase D execution in progress.** Phases 01–05 complete. Phase 06 (COLMAP per-cam) underway.
+**SUSPENDED — new footage collection planned.**
+All work on the 2026-05-20 capture is paused. Root cause: footage walks through 2-3 distinct
+rooms in one continuous clip — COLMAP cannot build a coherent single model from mixed-scene footage.
+Decision: collect simpler new footage with good overlap first, build pipeline confidence, then
+return to the complex multi-room footage (edited into per-room clips via DaVinci Resolve).
 
-### Phase 06 — what happened so far
-1. First attempt (sequential_matcher, overlap=30): 49/739 frames (6.6%) — failed.
-   Root cause: camera moving too fast for sequential matching. Even adjacent frames shared
-   too few SIFT features (6367 of expected 21k+ pairs had ANY match).
-2. vocab_tree_builder attempt: killed after 12+ hours — CPU faiss k-means never finishes.
-3. Current attempt: vocab_tree_matcher with pre-built COLMAP Flickr100K 256K-word tree
-   (downloaded to ~/.cache/colmap_vocab/vocab_tree_flickr100K_words256K.bin, 70MB).
-   This is the correct approach and should complete in minutes.
+### Phase 06 — Pixel9 COLMAP result (completed 2026-05-22)
+vocab_tree_matcher (nn=30) registered **39.1%** (289/739 frames). Gate failed (need 85%).
+Diagnosis: 62k matched pairs but 97% failed RANSAC — scene repetition signature.
+**Decision: Pixel9 footage may not be suitable.** Camera had close-ups, turns, erratic movement.
+User is evaluating via Postshot (suspended for now). May drop Pixel9 from pipeline.
 
-### Next steps after Pixel9 COLMAP completes
-1. Check `06_colmap_per_cam/pixel9/stats.json` — need registered_pct >= 85%
-2. If registration still low (<50%): see troubleshooting below
-3. Run A15: `bash scripts/06_colmap_per_cam.sh --cam samsung_a15`
-4. Run GoPro: `bash scripts/06_colmap_per_cam.sh --cam gopro_max`
-5. Phase 07: `bash scripts/07_colmap_merge.sh`
-6. Phase 10: `bash scripts/10_train.sh --trainer gsplat --scene-dir 07_colmap_merged`
+### Per-cam COLMAP final results (2026-05-22)
+| Camera | Registered | Points3D | Reproj | Notes |
+|---|---|---|---|---|
+| Pixel9 | 289/739 (39.1%) | 29,712 | 2.05px | Failed — erratic footage, multi-room |
+| Samsung A15 | 58/844 (6.9%) | 5,178 | 1.55px | Failed — same root cause |
+| GoPro Max | 2600/3244 (80.1%) | 247,759 | 1.04px | Best result — 4-dir rig helps |
 
-### If Pixel9 registration is still low after vocab_tree run
-Try in order:
-- Increase nn: `--nn 50` (matches each frame to 50 nearest instead of 30)
-- Check if scene is too repetitive (industrial scenes with repetitive walls are hard)
-- Lower blur threshold further (many blurry frames = bad matching)
-- Consider extracting at higher fps (3fps instead of 2fps) for more frame overlap
+**Root cause of failures:** All three cameras walked through 2-3 distinct rooms in one clip.
+COLMAP cannot build one model from geometrically disconnected spaces. Vocab_tree finds
+visual matches between similar industrial elements in different rooms; RANSAC rejects them.
+**Fix:** Edit footage to per-room clips before processing.
+
+### GoPro re-processing (completed 2026-05-22)
+- Root cause of bad GoPro data: `02_extract_360_crops.sh` used `v360=eac:equirect` (wrong format)
+  GoPro Max .360 is dual fisheye, not EAC. Output was garbage — "slices of equirectangular".
+- Fix: GoPro Player (Windows) exported proper equirectangular → `gopro_equa.mp4` (3072×1536)
+- Old bad data: all cleared (02_360_extracted/, 03_frames/gopro_max/, 04_filtered/gopro_max/, 05_masked/gopro_max/, 05_masked/masks/gopro_max/)
+- New pipeline running: trim (gopro offset=+4.32s) → 4 perspective crops (front/right/left/rear, pitch=0, no tilted_up)
+- Skip tilted_up: user confirmed overhead lights are harsh; pitch=0 crops avoid nadir (operator) and zenith (lights)
+
+### Next steps when resuming
+**Path A — new simple footage (immediate):**
+1. Capture single-scene footage with good overlap (see capture guidelines in docs/01_capture_field_guide.md)
+2. Run pipeline from Phase 01 — all scripts proven and ready
+
+**Path B — return to this footage (later, via DaVinci edits):**
+1. Edit each video to per-room clips in DaVinci Resolve
+2. Re-sync the trimmed clips (audio cross-correlation still works)
+3. Re-run from Phase 03 (frame extraction) — masking/COLMAP config already known
+4. GoPro: 80.1% with full clip → likely better with single-room clip
+
+**GoPro escalation (if COLMAP still fails after editing):**
+1. Lichtfeld 360° plugin on `gopro_equa_trimmed.mp4`
+2. Metashape native spherical SfM (Standard ~$179)
 
 ## Key calibration data (Phase 04)
 | Camera | min | p10 | median | p90 | max | Threshold | Kept |
 |---|---|---|---|---|---|---|---|
 | pixel9 | 2.1 | 4.3 | 15.3 | 41.4 | 64.1 | 5 | 739/854 |
 | samsung_a15 | 4.7 | 8.2 | 12.9 | 20.9 | 37.4 | 5 | 844/854 |
-| gopro_max | 24.6 | 57.1 | 213.6 | 399.1 | 571.7 | 50 | 3195/3416 |
+| gopro_max (GoPro Player) | 90.2 | 186.9 | 323.8 | 444.1 | 549.2 | 150 | 3244/3416 |
 
 ## Phase status
 | Phase | Status | Notes |
 |---|---|---|
 | 00 raw ingest | ✅ | checksums verified |
 | 01 trim+sync | ✅ | a15=-55.74s, gopro=+4.32s, clip=427s |
-| 02 GoPro 360 | ✅ | equirect=854f at 5760x2880; 4 crops |
-| 03 frames | ✅ | px9=854, a15=854, gp=3416 |
-| 04 blur cull | ✅ | inline OpenCV; px9=739, a15=844, gp=3195 |
-| 05 masking | ✅ | phones=passthrough, gopro=MOG2 |
-| 06 COLMAP per-cam | 🔄 | pixel9 running; a15+gopro pending |
+| 02 GoPro 360 | ✅ | GoPro Player equirect → 4 crops (front/right/left/rear, pitch=0, 1920×1440) |
+| 03 frames | ✅ | px9=739, a15=844, gp=3416 (4 dirs) |
+| 04 blur cull | ✅ | px9=739, a15=844, gp=3244 (threshold=150, min score=90) |
+| 05 masking | ✅ | px9/a15=passthrough, gp=passthrough (pitch=0 crops exclude nadir/zenith) |
+| 06 COLMAP per-cam | ⚠️ | pixel9=39.1% (below gate, may drop). a15+gopro pending |
 | 07 COLMAP merge | ⏳ | |
 | 08 LiDAR | ⏸ | deferred — scan not yet uploaded |
 | 09/10 training | ⏳ | gsplat simple_trainer.py at ~/.cache/gsplat_examples/ |
