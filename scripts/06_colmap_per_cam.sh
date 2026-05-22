@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 # Phase 06: Per-camera COLMAP SfM reconstruction.
-# Runs COLMAP feature_extractor → sequential_matcher → mapper (GLOMAP global mapper).
+# Runs COLMAP feature_extractor → vocab_tree_matcher → GLOMAP global mapper.
 # Outputs: 06_colmap_per_cam/<cam>/sparse/0/ + stats.json
 #
 # Usage: ./06_colmap_per_cam.sh [--cam <pixel9|samsung_a15|gopro_max|all>]
-#                               [--no-masks]        # skip mask_path even if 05_masked/ exists
-#                               [--colmap-only]     # skip GLOMAP, use COLMAP incremental mapper
-#                               [--overlap <int>]   # sequential_matcher overlap (default 30)
+#                               [--no-masks]         # skip mask_path even if 05_masked/ exists
+#                               [--colmap-only]      # skip GLOMAP, use COLMAP incremental mapper
+#                               [--matcher sequential|vocab_tree]  # default: vocab_tree
+#                               [--overlap <int>]    # sequential_matcher overlap (default 30)
+#                               [--nn <int>]         # vocab_tree nearest neighbors (default 30)
+#
+# Matcher choice:
+#   vocab_tree  (default) — builds a vocabulary tree from image features, then matches
+#               each frame to its most visually similar frames globally.
+#               Use for any scene where camera moves significantly between shots.
+#   sequential  — matches frames by sequence order (fast, but breaks for fast camera motion).
+#               Use only for slow pans or as a quick sanity check.
 #
 # Camera models used:
 #   pixel9, samsung_a15 : SIMPLE_RADIAL (phone, single focal length + 1 radial distortion)
@@ -20,8 +29,9 @@
 #   colmap gui --database_path 06_colmap_per_cam/<cam>/database.db \
 #              --image_path 05_masked/<cam>/         # visual SfM viewer (needs display)
 #
-# Expected: registered_pct 70-95% for video-derived frames, reproj_err < 1.0px.
-# Failure: registered_pct < 30% → check sequential overlap; if 0% → probable camera model mismatch.
+# Expected: registered_pct 70-95%, reproj_err < 1.0px.
+# Failure: registered_pct < 30% → camera moving too fast (lower fps or stricter blur cull).
+# Failure: registered_pct = 0% → camera model mismatch.
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -31,14 +41,18 @@ source "${SCRIPT_DIR}/lib/common.sh"
 TARGET_CAM="all"
 NO_MASKS=0
 COLMAP_ONLY=0
+MATCHER="vocab_tree"
 OVERLAP=30
+NN=30
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --cam)         TARGET_CAM="$2"; shift ;;
         --no-masks)    NO_MASKS=1 ;;
         --colmap-only) COLMAP_ONLY=1 ;;
+        --matcher)     MATCHER="$2"; shift ;;
         --overlap)     OVERLAP="$2"; shift ;;
+        --nn)          NN="$2"; shift ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
     shift
@@ -80,7 +94,9 @@ run_colmap_cam() {
     echo "=== COLMAP Phase 06: ${cam} ==="
     echo "  images:      ${img_dir}"
     echo "  camera_model: ${cam_model}  mixed_cameras: ${mixed_cams}"
-    echo "  overlap:     ${OVERLAP}"
+    echo "  matcher:     ${MATCHER}"
+    [[ "${MATCHER}" == "sequential" ]] && echo "  overlap:     ${OVERLAP}"
+    [[ "${MATCHER}" == "vocab_tree" ]] && echo "  nn:          ${NN}"
     [[ -n "${mask_arg}" ]] && echo "  masks:       ${MASKS_DIR}/${cam}"
 
     activate_env fselect
@@ -97,12 +113,27 @@ run_colmap_cam() {
         --FeatureExtraction.use_gpu 1 \
         --SiftExtraction.max_num_features 8192
 
-    # 2. Sequential matching (preferred for video-derived frames; exhaustive fails)
-    echo "--- sequential_matcher (overlap=${OVERLAP}) ---"
-    colmap sequential_matcher \
-        --database_path "${db}" \
-        --SequentialMatching.overlap "${OVERLAP}" \
-        --FeatureMatching.use_gpu 1
+    # 2. Matching — vocab_tree (default) or sequential
+    if [[ "${MATCHER}" == "vocab_tree" ]]; then
+        local tree="${out_dir}/vocab_tree.bin"
+        echo "--- vocab_tree_builder ---"
+        colmap vocab_tree_builder \
+            --database_path "${db}" \
+            --vocab_tree_path "${tree}" \
+            --num_visual_words 32768
+        echo "--- vocab_tree_matcher (nn=${NN}) ---"
+        colmap vocab_tree_matcher \
+            --database_path "${db}" \
+            --VocabTreeMatching.vocab_tree_path "${tree}" \
+            --VocabTreeMatching.num_nearest_neighbors "${NN}" \
+            --FeatureMatching.use_gpu 1
+    else
+        echo "--- sequential_matcher (overlap=${OVERLAP}) ---"
+        colmap sequential_matcher \
+            --database_path "${db}" \
+            --SequentialMatching.overlap "${OVERLAP}" \
+            --FeatureMatching.use_gpu 1
+    fi
 
     # 3. Reconstruct: GLOMAP global mapper (preferred) or COLMAP incremental mapper
     if [[ "${COLMAP_ONLY}" -eq 0 ]]; then

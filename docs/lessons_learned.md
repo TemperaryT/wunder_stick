@@ -87,6 +87,34 @@ about the rotation via camera metadata.
 
 ---
 
+## 2026-05-21 — Sequential_matcher fails for fast-moving cameras; use vocab_tree_matcher
+
+**Context:** Pixel9 sequential_matcher (overlap=30, then overlap=200) produced 6,367 matched pairs
+from ~21,735 attempted. GLOMAP registered only 49/739 frames (6.6%). Reproj error was good (1.35px)
+meaning the matched frames were fine — there just weren't enough connections.
+
+**Root cause:** At 2fps with a walking camera, consecutive frames share too few SIFT features.
+Investigation: only 6,367 of the expected 21,735 overlap=30 pairs had ANY SIFT matches. Even frames
+±30 apart often share zero features because the camera moved too far between shots.
+Keypoints per frame were excellent (median 8212) — the scene content was the problem, not extraction.
+
+**Fix:** Build a vocabulary tree from the image features (`colmap vocab_tree_builder`), then
+use `colmap vocab_tree_matcher` with `num_nearest_neighbors=20-50`. This matches each frame to its
+most visually similar frames globally, bypassing sequence order entirely.
+
+**Rule for video-derived frames:** Use vocab_tree_matcher, not sequential_matcher, for any scene
+where the camera is walking around (not slowly panning). Update `06_colmap_per_cam.sh` to use
+vocab_tree_matcher as default, with sequential as a fast-validation option only.
+
+**Updated pipeline in 06_colmap_per_cam.sh:**
+```bash
+colmap vocab_tree_builder --database_path db --vocab_tree_path tree.bin --num_visual_words 32768
+colmap vocab_tree_matcher --database_path db --vocab_tree_path tree.bin \
+    --VocabTreeMatching.num_nearest_neighbors 30
+```
+
+---
+
 ## 2026-05-21 — COLMAP 3.13 GPU flags are not SiftExtraction/SiftMatching
 
 **Context:** COLMAP documentation and older scripts use `--SiftExtraction.use_gpu 1`
