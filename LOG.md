@@ -106,4 +106,6 @@ Next session resumes at Phase B item 1: `commit_phase` helper.
 - 2026-05-21 13:50 phase-02-gopro-360-crops complete. equirect=854f at 5760x2880; front=854f
 - 2026-05-21 phase-04-blur-cull complete. per-cam thresholds: px9=5(→739/854), a15=5(→844/854), gp=50(→3195/3416). LESSON: prep_frames.py has hidden --target 100 (subsamples+renames); replaced with inline OpenCV. Laplacian scores cross-camera incomparable due to GoPro Lanczos ringing. See docs/lessons_learned.md.
 - 2026-05-21 phase-05-mask complete. px9=739(passthrough), a15=844(passthrough), gp=3195(MOG2→3195 masks). GoPro masked; phones static so pass-through symlinks only.
-- 2026-05-21 19:17 phase-06-colmap-per-cam complete. pixel9=6.6%reg 
+- 2026-05-21 19:17 phase-06-colmap-per-cam FAILED (pixel9=6.6%reg). sequential_matcher too sparse for walking camera — 6367/21k+ pairs had any SIFT matches.
+- 2026-05-22 LESSON: vocab_tree_builder (CPU faiss k-means) ran 12+ hours on 5.4M descriptors — killed. Use pre-built Flickr100K 256K tree (~/.cache/colmap_vocab/) instead.
+- 2026-05-22 00:27 phase-06 pixel9 re-run with vocab_tree_matcher (pre-built tree) — IN PROGRESS. a15+gopro queued.
