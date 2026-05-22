@@ -20,7 +20,11 @@ _Last updated: 2026-05-21 — Phase C complete. Phases 01-04 done. Phase D next 
 - Laplacian scores are NOT cross-camera comparable: phones score 2-64, GoPro crops score 25-572 (Lanczos ringing inflates GoPro scores). Use per-camera thresholds.
 - Total 4778 frames is above the 800-1500 COLMAP target. Phase 05 masking will reduce further; temporal subsampling may be needed before COLMAP.
 
-**Next: Phase D** — write scripts 05-07, set up gsplat, run end-to-end.
+**Phase D scripts written and committed.** Execution in progress:
+- Phase 05 masking complete ✅
+- Phase 06 COLMAP per-cam: **pixel9 running now** (a15 + gopro_max queued after)
+- Phase 07 merge: pending
+- Training: pending (simple_trainer.py fetched to ~/.cache/gsplat_examples/)
 
 ## Key calibration data (Phase 04)
 | Camera | min | p10 | median | p75 | p90 | max | Used threshold | Kept |
