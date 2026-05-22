@@ -105,3 +105,4 @@ Next session resumes at Phase B item 1: `commit_phase` helper.
 - 2026-05-21 13:42 phase-03-extract-frames complete. fps=2 width=1920; pixel9=854 a15=854 gopro=3416 (4 crop dirs merged)
 - 2026-05-21 13:50 phase-02-gopro-360-crops complete. equirect=854f at 5760x2880; front=854f
 - 2026-05-21 phase-04-blur-cull complete. per-cam thresholds: px9=5(→739/854), a15=5(→844/854), gp=50(→3195/3416). LESSON: prep_frames.py has hidden --target 100 (subsamples+renames); replaced with inline OpenCV. Laplacian scores cross-camera incomparable due to GoPro Lanczos ringing. See docs/lessons_learned.md.
+- 2026-05-21 19:11 phase-05-mask complete. method=passthrough; skip-if-static
