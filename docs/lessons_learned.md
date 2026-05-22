@@ -87,6 +87,23 @@ about the rotation via camera metadata.
 
 ---
 
+## 2026-05-21 — COLMAP 3.13 GPU flags are not SiftExtraction/SiftMatching
+
+**Context:** COLMAP documentation and older scripts use `--SiftExtraction.use_gpu 1`
+and `--SiftMatching.use_gpu 1`. These fail with "unrecognised option" in COLMAP 3.13.0.
+
+**Correct flags in COLMAP 3.13:**
+```bash
+--FeatureExtraction.use_gpu 1   # was: --SiftExtraction.use_gpu
+--FeatureMatching.use_gpu 1     # was: --SiftMatching.use_gpu
+```
+
+`--SiftExtraction.max_num_features` is still valid (unchanged).
+
+**File path:** `scripts/06_colmap_per_cam.sh`, `scripts/07_colmap_merge.sh`
+
+---
+
 ## 2026-05-21 — prep_frames.py has a hidden --target 100 that silently subsamples
 
 **Context:** `04_filter_blur.sh` called `prep_frames.py --frames <dir> --threshold T`.

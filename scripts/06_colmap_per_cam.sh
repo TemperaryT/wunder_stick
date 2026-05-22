@@ -94,7 +94,7 @@ run_colmap_cam() {
         --ImageReader.single_camera $([[ "${mixed_cams}" -eq 0 ]] && echo 1 || echo 0) \
         ${mixed_arg} \
         ${mask_arg} \
-        --SiftExtraction.use_gpu 1 \
+        --FeatureExtraction.use_gpu 1 \
         --SiftExtraction.max_num_features 8192
 
     # 2. Sequential matching (preferred for video-derived frames; exhaustive fails)
@@ -102,7 +102,7 @@ run_colmap_cam() {
     colmap sequential_matcher \
         --database_path "${db}" \
         --SequentialMatching.overlap "${OVERLAP}" \
-        --SiftMatching.use_gpu 1
+        --FeatureMatching.use_gpu 1
 
     # 3. Reconstruct: GLOMAP global mapper (preferred) or COLMAP incremental mapper
     if [[ "${COLMAP_ONLY}" -eq 0 ]]; then

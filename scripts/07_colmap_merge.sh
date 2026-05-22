@@ -158,14 +158,14 @@ strategy_a() {
         --ImageReader.single_camera 0 \
         --ImageReader.single_camera_per_folder 0 \
         ${mask_arg} \
-        --SiftExtraction.use_gpu 1 \
+        --FeatureExtraction.use_gpu 1 \
         --SiftExtraction.max_num_features 8192
 
     echo "--- sequential_matcher (overlap=${OVERLAP}) ---"
     colmap sequential_matcher \
         --database_path "${db}" \
         --SequentialMatching.overlap "${OVERLAP}" \
-        --SiftMatching.use_gpu 1
+        --FeatureMatching.use_gpu 1
 
     echo "--- glomap mapper ---"
     glomap mapper \
